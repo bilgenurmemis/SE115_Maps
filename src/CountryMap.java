@@ -4,8 +4,9 @@ import java.util.Scanner;
 
 public class CountryMap {
     private int cityCount;
-    private String[] cities;
-    private String[][] routes;
+    private City[] cities;
+    private Route[] routes;
+
 
     public void readMap(String mapFile) throws FileNotFoundException {
         File file = new File(mapFile);
@@ -30,22 +31,25 @@ public class CountryMap {
         }
 
 
-        line++; //city names check
+        line++; // city names check
         if (sc.hasNextLine()) {
             String cityLine = sc.nextLine().trim();
-            cities = cityLine.split(" ");
+            String[] cityNames = cityLine.split(" ");
 
-            for (String city : cities) {
-                if (!city.matches("[A-Za-z]+")) {
-                    System.out.println("Error Line: " + line + " - Invalid city name." );
+            cities = new City[cityNames.length];
+            for (int i = 0; i < cityNames.length; i++) {
+
+                if (!cityNames[i].matches("[A-Za-z]+")) {
+                    System.out.println("Error Line: " + line + " - Invalid city name.");
                     return;
                 }
+                cities[i] = new City(cityNames[i]);
             }
         } else {
             System.out.println("Error Line: " + line + " - Cities are missing.");
             return;
-        }
 
+        }
 
         line++; //routes check
         if (sc.hasNextLine()) {
@@ -57,7 +61,7 @@ public class CountryMap {
                 System.out.println("Error Line: " + line + " - Invalid route count.");
                 return;
             }
-            routes = new String[routeCount][3];
+            routes = new Route[routeCount];
 
             for (int i = 0; i < routeCount; i++) {
                 line++;
@@ -68,7 +72,21 @@ public class CountryMap {
                         System.out.println("Error Line: " + line + " - Invalid route format.");
                         return;
                     }
-                    routes[i] = routeParts;
+
+                    City fromCity = findCity(routeParts[0]);
+                    City toCity = findCity(routeParts[1]);
+                    if (fromCity == null || toCity == null) {
+                        System.out.println("Error Line: " + line + " - Invalid city name in route.");
+                        return;
+                    }
+
+                    if (!routeParts[2].matches("\\d+")) {
+                        System.out.println("Error Line: " + line + " - Invalid distance value.");
+                        return;
+                    }
+                    int distance = Integer.parseInt(routeParts[2]);
+
+                    routes[i] = new Route(fromCity, toCity, distance);
                 } else {
                     System.out.println("Error Line: " + line + " - Route is missing.");
                     return;
@@ -80,25 +98,36 @@ public class CountryMap {
         }
 
 
-        line++; //start&end cities check
-        if (sc.hasNextLine()) {
-            String startEndCities = sc.nextLine().trim();
-            String[] citiesFromInput = startEndCities.split(" ");
 
-            if (citiesFromInput.length != 2) {
-                System.out.println("Error Line: " + line + " - Invalid start and end city format.");
+        line++; //start&end cities check
+            if (sc.hasNextLine()) {
+                String startEndCities = sc.nextLine().trim();
+                String[] citiesFromInput = startEndCities.split(" ");
+
+                if (citiesFromInput.length != 2) {
+                    System.out.println("Error Line: " + line + " - Invalid start and end city format.");
+                    return;
+                }
+            } else {
+                System.out.println("Error Line: " + line + " - Start and end cities are missing.");
                 return;
             }
-        } else {
-            System.out.println("Error Line: " + line + " - Start and end cities are missing.");
-            return;
+
+
+            System.out.println("File read is successful!");
+
         }
-
-
-        System.out.println("File read is successful!");
-
-      }
+    public City findCity(String name) {
+        for (City city : cities) {
+            if (city.getName().equalsIgnoreCase(name)) {
+                return city;
+            }
+        }
+        return null;
     }
+
+
+}
 
 
 
