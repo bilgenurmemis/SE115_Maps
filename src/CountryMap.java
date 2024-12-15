@@ -125,9 +125,49 @@ public class CountryMap {
         }
         return null;
     }
+    public int getCityCount() {
+        return cities.length;
+    }
+    public int getCityIndex(City city) {
+        for (int i = 0; i < cities.length; i++) {
+            if (cities[i].equals(city)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    public City getCityByIndex(int index) {
+        if (index >= 0 && index < cities.length) {
+            return cities[index];
+        }
+        return null;
+    }
+    public Route[] getRoutesFromCity(City city) {
+        int routeCount = 0;
+        for (Route route : routes) {
+            if (route.getStartCity().equals(city)) {
+                routeCount++;
+            }
+        }
+        Route[] cityRoutes = new Route[routeCount];
+        int index = 0;
+
+        for (Route route : routes) {
+            if (route.getStartCity().equals(city)) {
+                cityRoutes[index++] = route;
+            }
+        }
+
+        return cityRoutes;
+    }
+
+
+
 
 
 }
+
+
 
 
 
