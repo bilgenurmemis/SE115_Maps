@@ -1,122 +1,148 @@
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.Scanner;
 
 public class CountryMap {
     private int cityCount;
     private City[] cities;
     private Route[] routes;
+    private String startCityName;
+    private String endCityName;
 
-
-    public void readMap(String mapFile) throws FileNotFoundException {
+    public void readMap(String mapFile) {
         File file = new File(mapFile);
         int line = 0;
+        Scanner sc = null;
+        boolean hasErrors = false;
 
-        if (!file.exists()) {
-            System.out.println("Error:The file couldn't be found.");
-            return;
-        }
-        Scanner sc = new Scanner(file);
-
-        line++; //number of cities check
-        if (sc.hasNextLine()) {
-            String cityCountLine = sc.nextLine().trim();
-
-            if (cityCountLine.matches("\\d+")) {
-                cityCount = Integer.parseInt(cityCountLine);
-            } else {
-                System.out.println("Error Line: " + line + " - Invalid number of cities.");
+        try {
+            if (!file.exists()) {
+                System.out.println("Error: The file couldn't be found.");
                 return;
             }
-        }
 
+            sc = new Scanner(file);
 
-        line++; // city names check
-        if (sc.hasNextLine()) {
-            String cityLine = sc.nextLine().trim();
-            String[] cityNames = cityLine.split(" ");
-
-            cities = new City[cityNames.length];
-            for (int i = 0; i < cityNames.length; i++) {
-
-                if (!cityNames[i].matches("[A-Za-z]+")) {
-                    System.out.println("Error Line: " + line + " - Invalid city name.");
-                    return;
+            // number of cities check
+            line++;
+            if (!sc.hasNextLine()) {
+                System.out.println("Error Line: " + line + " - Missing number of cities.");
+                hasErrors = true;
+            } else {
+                String cityCountLine = sc.nextLine().trim();
+                if (!cityCountLine.matches("\\d+")) {
+                    System.out.println("Error Line: " + line + " - Invalid number of cities format.");
+                    hasErrors = true;
+                } else {
+                    cityCount = Integer.parseInt(cityCountLine);
                 }
-                cities[i] = new City(cityNames[i]);
             }
-        } else {
-            System.out.println("Error Line: " + line + " - Cities are missing.");
-            return;
 
-        }
-
-        line++; //routes check
-        if (sc.hasNextLine()) {
-            String routeCountLine = sc.nextLine().trim();
-            int routeCount;
-            if (routeCountLine.matches("\\d+")) {
-                routeCount = Integer.parseInt(routeCountLine);
+            // city names check
+            line++;
+            if (!sc.hasNextLine()) {
+                System.out.println("Error Line: " + line + " - Missing city names.");
+                hasErrors = true;
             } else {
-                System.out.println("Error Line: " + line + " - Invalid route count.");
-                return;
+                String cityLine = sc.nextLine().trim();
+                String[] cityNames = cityLine.split(" ");
+                if (cityNames.length != cityCount) {
+                    System.out.println("Error Line: " + line + " - City count mismatch. Expected: " + cityCount + ", Found: " + cityNames.length);
+                    hasErrors = true;
+                } else {
+                    cities = new City[cityNames.length];
+                    for (int i = 0; i < cityNames.length; i++) {
+                        if (!cityNames[i].matches("[A-Za-z]+")) {
+                            System.out.println("Error Line: " + line + " - Invalid city name: " + cityNames[i]);
+                            hasErrors = true;
+                        } else {
+                            cities[i] = new City(cityNames[i]);
+                        }
+                    }
+                }
             }
-            routes = new Route[routeCount];
 
+            // route count check
+            line++;
+            int routeCount = 0;
+            if (!sc.hasNextLine()) {
+                System.out.println("Error Line: " + line + " - Missing number of routes.");
+                hasErrors = true;
+            } else {
+                String routeCountLine = sc.nextLine().trim();
+                if (!routeCountLine.matches("\\d+")) {
+                    System.out.println("Error Line: " + line + " - Invalid route count format.");
+                    hasErrors = true;
+                } else {
+                    routeCount = Integer.parseInt(routeCountLine);
+                    routes = new Route[routeCount];
+                }
+            }
+
+            // routes check
             for (int i = 0; i < routeCount; i++) {
                 line++;
-                if (sc.hasNextLine()) {
+                if (!sc.hasNextLine()) {
+                    System.out.println("Error Line: " + line + " - Missing route definition.");
+                    hasErrors = true;
+                } else {
                     String routeLine = sc.nextLine().trim();
                     String[] routeParts = routeLine.split(" ");
                     if (routeParts.length != 3) {
-                        System.out.println("Error Line: " + line + " - Invalid route format.");
-                        return;
+                        System.out.println("Error Line: " + line + " - Invalid route format. Expected: <from> <to> <distance>");
+                        hasErrors = true;
+                    } else {
+                        City fromCity = findCity(routeParts[0]);
+                        City toCity = findCity(routeParts[1]);
+                        if (fromCity == null || toCity == null) {
+                            System.out.println("Error Line: " + line + " - Invalid city name in route.");
+                            hasErrors = true;
+                        }
+                        if (!routeParts[2].matches("\\d+")) {
+                            System.out.println("Error Line: " + line + " - Invalid distance value.");
+                            hasErrors = true;
+                        } else {
+                            int distance = Integer.parseInt(routeParts[2]);
+                            routes[i] = new Route(fromCity, toCity, distance);
+                        }
                     }
-
-                    City fromCity = findCity(routeParts[0]);
-                    City toCity = findCity(routeParts[1]);
-                    if (fromCity == null || toCity == null) {
-                        System.out.println("Error Line: " + line + " - Invalid city name in route.");
-                        return;
-                    }
-
-                    if (!routeParts[2].matches("\\d+")) {
-                        System.out.println("Error Line: " + line + " - Invalid distance value.");
-                        return;
-                    }
-                    int distance = Integer.parseInt(routeParts[2]);
-
-                    routes[i] = new Route(fromCity, toCity, distance);
-                } else {
-                    System.out.println("Error Line: " + line + " - Route is missing.");
-                    return;
                 }
             }
-        } else {
-            System.out.println("Error Line: " + line + " - Routes are missing.");
-            return;
-        }
 
-
-
-        line++; //start&end cities check
-            if (sc.hasNextLine()) {
+            // start&end cities check
+            line++;
+            if (!sc.hasNextLine()) {
+                System.out.println("Error Line: " + line + " - Missing start and end cities.");
+                hasErrors = true;
+            } else {
                 String startEndCities = sc.nextLine().trim();
                 String[] citiesFromInput = startEndCities.split(" ");
-
                 if (citiesFromInput.length != 2) {
                     System.out.println("Error Line: " + line + " - Invalid start and end city format.");
-                    return;
+                    hasErrors = true;
+                } else {
+                    startCityName = citiesFromInput[0];
+                    endCityName = citiesFromInput[1];
+                    if (findCity(startCityName) == null || findCity(endCityName) == null) {
+                        System.out.println("Error Line: " + line + " - Start or end city not found.");
+                        hasErrors = true;
+                    }
                 }
-            } else {
-                System.out.println("Error Line: " + line + " - Start and end cities are missing.");
-                return;
             }
 
-
-            System.out.println("File read is successful!");
-
+            if (!hasErrors) {
+                System.out.println("File read is successful!");
+            }
+        } catch (Exception e) {
+            System.out.println("An unexpected error occurred: " + e.getMessage());
+        } finally {
+            if (sc != null) {
+                sc.close();
+            }
         }
+    }
+
+
+
     public City findCity(String name) {
         for (City city : cities) {
             if (city.getName().equalsIgnoreCase(name)) {
@@ -160,8 +186,13 @@ public class CountryMap {
 
         return cityRoutes;
     }
+    public String getStartCityName() {
+        return startCityName;
+    }
 
-
+    public String getEndCityName() {
+        return endCityName;
+    }
 
 
 
