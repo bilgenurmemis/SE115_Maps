@@ -1,6 +1,5 @@
 public class Route {
 
-
         private City startCity;
         private City endCity;
         private int distance;

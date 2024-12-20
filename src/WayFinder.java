@@ -24,7 +24,6 @@ public class WayFinder {
 
         printFastestRoute(startCity, endCity);
     }
-
     private void initializeDistances(City startCity) {
         for (int i = 0; i < distances.length; i++) {
             distances[i] = Integer.MAX_VALUE;
@@ -32,7 +31,6 @@ public class WayFinder {
         }
         distances[map.getCityIndex(startCity)] = 0;
     }
-
     private City getNearestUnvisitedCity() {
         int minDistance = Integer.MAX_VALUE;
         City nearestCity = null;
@@ -43,7 +41,6 @@ public class WayFinder {
                 nearestCity = map.getCityByIndex(i);
             }
         }
-
         return nearestCity;
     }
 
@@ -70,16 +67,24 @@ public class WayFinder {
             System.out.println("No route found from " + startCity.getName() + " to " + endCity.getName());
             return;
         }
-
-        StringBuilder route = new StringBuilder();
+        City[] routeArray = new City[map.getCityCount()];
+        int index = 0;
         City currentCity = endCity;
+
         while (currentCity != null) {
-            route.insert(0, currentCity.getName() + (!route.isEmpty() ? " -> " : ""));
+            routeArray[index++] = currentCity;
             currentCity = previousCities[map.getCityIndex(currentCity)];
         }
-
-        System.out.println("Fastest Way: " + route);
+        System.out.print("Fastest Way: ");
+        for (int i = index - 1; i >= 0; i--) {
+            System.out.print(routeArray[i].getName());
+            if (i > 0) {
+                System.out.print(" -> ");
+            }
+        }
+        System.out.println();
         System.out.println("Total Time: " + distances[map.getCityIndex(endCity)] + " min");
     }
+
 }
 
